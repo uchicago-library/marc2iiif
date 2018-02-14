@@ -4,7 +4,7 @@ setup(
     name="marc2iiif",
     author="Tyler Danstrom",
     author_email="tdanstrom@uchicago.edu",
-    version="2.0.0",
+    version="0.0.1",
     license="LGPL3.0",
     description="An application to convert MARC records into IIIF records",
     keywords="python3.6 iiif-presentation manifests",
