@@ -13,5 +13,3 @@ This will require the following tool (which is out of scope of this product)
 
 1. an application that will take the generated IIIF manifests and a location of digital files and add the matching files to each IIIF manifest thereby filling in the sequence
 
-# marc2iiif
-An application that will take 1 or more Marc records (in either binary or MARCXML) and convert them into IIIF manifests
