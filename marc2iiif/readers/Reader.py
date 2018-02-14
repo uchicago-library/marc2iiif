@@ -1,3 +1,5 @@
+"""an abstract class Reader that requires all concret instances have a method read
+"""
 
 from abc import ABC, abstractclassmethod
 

@@ -1,3 +1,5 @@
+"""a test script to show proof of concept of the application
+"""
 
 from argparse import ArgumentParser
 from os import _exit

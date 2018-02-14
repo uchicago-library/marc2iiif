@@ -1,4 +1,7 @@
-from ..converters import Marc2IIIFConverter
+"""a factory class to build an instance of a metadata converter 
+"""
+
+from ..converters.Marc2IIIFConverter import Marc2IIIFConverter
 
 class MetadataConverterFactory(object):
     def __init__(self, request):
@@ -6,4 +9,5 @@ class MetadataConverterFactory(object):
 
 
     def build(self):
-        return NotImplemented
+        if self.request == 'marc2iiif':
+            return Marc2IIIFConverter()

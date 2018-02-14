@@ -1,4 +1,7 @@
-from ..readers import OnDiskReader
+"""a factory class to build an instance of a location reader
+"""
+
+from ..readers.OnDiskReader import OnDiskReader
 
 class LocationReaderFactory(object):
     def __init__(self, request):
@@ -6,4 +9,5 @@ class LocationReaderFactory(object):
 
 
     def build(self):
-        return NotImplemented
+        if self.request == 'ondisk':
+            return OnDiskReader()

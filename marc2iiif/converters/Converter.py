@@ -1,3 +1,5 @@
+"""an abstract class Converter that requires all concrete instances have a method convert and a property input
+"""
 
 from abc import ABC, abstractmethod
 
