@@ -6,4 +6,5 @@ twine
 autopep8
 check-manifest
 sphinx
+sphinx-autobuild
 sphinx_rtd_theme
