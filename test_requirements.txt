@@ -1,2 +1,10 @@
+ testsp
+wheel
+flake8
+coverage
 pytest
-coveralls
+twine
+autopep8
+check-manifest
+sphinx
+sphinx_rtd_theme
