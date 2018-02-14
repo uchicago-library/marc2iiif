@@ -2,6 +2,7 @@
 """
 from .Evaluator import Evaluator
 
+
 class MarcEvaluator(Evaluator):
     def __init__(self):
         pass

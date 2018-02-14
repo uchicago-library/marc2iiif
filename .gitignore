@@ -6,3 +6,4 @@ dist/*
 *egg*
 WinENV/*
 .vscode/*
+*pytest_cache*

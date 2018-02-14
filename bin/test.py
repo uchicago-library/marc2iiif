@@ -15,7 +15,7 @@ def main():
     parsed_args = arguments.parse_args()
     try:
         location = parsed_args.location_of_files
-        c = Controller('marc', location, 'marc2iiif')
+        c = Controller('marc', 'ondisk', 'marc2iiif')
         stdout.write("hello from the test cli\n")
         return 0
     except KeyboardInterrupt:

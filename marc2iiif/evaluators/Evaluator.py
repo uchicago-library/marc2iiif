@@ -3,6 +3,7 @@
 
 from abc import ABC, abstractclassmethod
 
+
 class Evaluator(ABC):
     @abstractclassmethod
     def evaluate(self, something_to_evaluate):

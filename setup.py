@@ -9,10 +9,11 @@ setup(
     description="An application to convert MARC records into IIIF records",
     keywords="python3.6 iiif-presentation manifests marc",
     packages=['marc2iiif'],
-    scripts=['bin/test.py'] ,
+    scripts=['bin/test.py'],
     classifiers=[
-        "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
-        "Development Status :: 5 - Production/Stable",
+        "License :: OSI Approved :: GNU Library or Lesser " +\
+        "General Public License (LGPL)",
+        "Development Status :: 5 - Alpha/Prototype",
         "Intended Audience :: Education",
         "Operating System :: POSIX :: Linux",
         "Topic :: Text Processing :: Markup :: XML",

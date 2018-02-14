@@ -1,12 +1,12 @@
 """an concrete instance of class Reader that can be used to read files stored on locally accessible disk
 """
 
-from abc import ABC, abstractclassmethod
+from .Reader import Reader
 
-class Reader(ABC):
+
+class OnDiskReader(Reader):
     def __init__(self):
-        pass
+        self.items = []
 
-    @abstractclassmethod
     def read(self):
-        pass
+        return NotImplemented
