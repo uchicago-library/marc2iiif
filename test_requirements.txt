@@ -1,4 +1,3 @@
- testsp
 wheel
 flake8
 coverage
