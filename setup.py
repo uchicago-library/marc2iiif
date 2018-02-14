@@ -11,7 +11,7 @@ setup(
     packages=['marc2iiif'],
     scripts=['bin/test.py'],
     classifiers=[
-        "License :: OSI Approved :: GNU Library or Lesser " +\
+        "License :: OSI Approved :: GNU Library or Lesser " +
         "General Public License (LGPL)",
         "Development Status :: 5 - Alpha/Prototype",
         "Intended Audience :: Education",

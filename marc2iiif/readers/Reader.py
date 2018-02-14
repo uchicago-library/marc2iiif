@@ -9,5 +9,5 @@ class Reader(ABC):
         pass
 
     @abstractclassmethod
-    def read(self):
+    def read(self, a_location):
         pass

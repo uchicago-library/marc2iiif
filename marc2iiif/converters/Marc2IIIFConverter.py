@@ -8,5 +8,5 @@ class Marc2IIIFConverter(Converter):
     def __init__(self):
         pass
 
-    def convert(self):
+    def convert(self, input_data):
         return NotImplemented

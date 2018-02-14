@@ -8,5 +8,5 @@ class OnDiskReader(Reader):
     def __init__(self):
         self.items = []
 
-    def read(self):
-        return NotImplemented
+    def read(self, a_location):
+        return []
