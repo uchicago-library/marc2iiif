@@ -21,7 +21,7 @@ def main():
         c = Controller('marc', 'ondisk', 'marc2iiif')
         metadata_packages = c.evaluate(location)
         # TODO: need to write a IIIFWriterFactory class that will return an instance of a IIIFWriter for variety of write purposes
-        #writer = IIIFWriterFactory("ondisk").build()
+        writer = IIIFWriterFactory("ondisk").build()
         for n_package in metadata_packages:
             # need to write the IIIF Manifests somewhere
             writer.write(n_package) 
