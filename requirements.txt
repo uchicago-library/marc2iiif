@@ -1,0 +1,2 @@
+pymarc
+git+https://github.com/uchicago-library/pyiiif

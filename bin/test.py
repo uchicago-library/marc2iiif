@@ -2,12 +2,20 @@
 """
 
 from argparse import ArgumentParser
-from os import _exit
+from os import _exit, scandir
+from pymarc import MARCReader
 from sys import stdout
 
-from marc2iiif.controllers.Controller import Controller
-
 __VERSION__ = "0.1.0"
+
+def find_marc_files(path):
+    """a function to find marc files in a particular directory on-disk
+    """
+    for n_item in scandir(path):
+        if n_item.is_file():
+            return n_item.path
+        elif n_item.is_dir():
+            yield from find_marc_files(n_item.path)
 
 
 def main():
@@ -18,15 +26,7 @@ def main():
     parsed_args = arguments.parse_args()
     try:
         location = parsed_args.location_of_files
-        c = Controller('marc', 'ondisk', 'marc2iiif')
-        metadata_packages = c.evaluate(location)
-        # TODO: need to write a IIIFWriterFactory class that will return an instance of a IIIFWriter for variety of write purposes
-        writer = IIIFWriterFactory("ondisk").build()
-        for n_package in metadata_packages:
-            # need to write the IIIF Manifests somewhere
-            writer.write(n_package) 
-            n_package.write()
-        stdout.write("hello from the test cli\n")
+        find_marc_files(location) 
         return 0
     except KeyboardInterrupt:
         return 131
