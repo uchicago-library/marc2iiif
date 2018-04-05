@@ -3,7 +3,7 @@
 
 from argparse import ArgumentParser
 from os import _exit, scandir
-from pymarc import MARCReader
+from marc2iiif import MarcFilesFromDisk
 from sys import stdout
 
 __VERSION__ = "0.1.0"
@@ -11,11 +11,7 @@ __VERSION__ = "0.1.0"
 def find_marc_files(path):
     """a function to find marc files in a particular directory on-disk
     """
-    for n_item in scandir(path):
-        if n_item.is_file():
-            return n_item.path
-        elif n_item.is_dir():
-            yield from find_marc_files(n_item.path)
+    MarcFilesFromDisk(path)
 
 
 def main():
@@ -26,7 +22,7 @@ def main():
     parsed_args = arguments.parse_args()
     try:
         location = parsed_args.location_of_files
-        find_marc_files(location) 
+        marc_readers = MarcFilesFromDisk(location)
         return 0
     except KeyboardInterrupt:
         return 131
