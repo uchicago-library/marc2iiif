@@ -39,8 +39,8 @@ class IIIFDataExtractionFromMarc:
         else:
             title_parts = [x.get("245").get("subfields") for x in a_marc_record.get("fields") if x.get("245")][0]
             major_title = [x.get("a") for x in title_parts if x.get("a")][0]
-            tail_title = [x.get("b" for x in title_parts if x.get("b")][0]
-            responsibility = [x[get("c") for x in title_parts if x.get("c")]
+            tail_title = [x.get("b") for x in title_parts if x.get("b")][0]
+            responsibility = [x.get("c") for x in title_parts if x.get("c")]
             if major_title:
                 self.label = major_title
             else:
@@ -49,7 +49,5 @@ class IIIFDataExtractionFromMarc:
                 self.full_title = major_title + tail_title
             if responsibility:
                 self.responsibility_statement = responsibility
-
-
             #self.simple_title = [x for x in a_marc_record.get('245').get('subfields') if x.get()
             
