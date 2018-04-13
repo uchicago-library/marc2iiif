@@ -3,7 +3,7 @@
 
 from argparse import ArgumentParser
 from os import _exit, scandir
-from marc2iiif import MarcFilesFromDisk
+from marc2iiif import MarcFilesFromDisk, IIIFDataExtractionFromMarc
 from sys import stdout
 
 __VERSION__ = "0.1.0"
@@ -23,6 +23,10 @@ def main():
     try:
         location = parsed_args.location_of_files
         marc_readers = MarcFilesFromDisk(location)
+        for n in marc_readers:
+            p = IIIFDataExtractionFromMarc(n)
+            print(p.label)
+            print(p.description)
         return 0
     except KeyboardInterrupt:
         return 131
