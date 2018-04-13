@@ -3,6 +3,7 @@ from itertools import chain
 from os import scandir
 from os.path import isdir, isfile
 from pymarc import MARCReader
+from re import compile as re_compile
 
 class MarcFilesFromDisk:
 
@@ -73,7 +74,6 @@ class IIIFDataExtractionFromMarc:
             raise ValueError("must pass a marc record as a dictionary to set description property")
         else:
             all_fields = [x for x in value.get("fields")]
-            field_keys = list(chain(*[list(x.keys()) for x in all_fields]))
             note = ""
             description = ""
             for thing in all_fields:
@@ -107,7 +107,7 @@ class IIIFDataExtractionFromMarc:
         if hasattr(self, '_description'):
             del self._description
 
-    def set_description(self, value):
+    def set_metadata(self, value):
         if isinstance(value, IIIFMetadataBoxFromMarc):
             setattr(self, "_metadata", value)
         else:
@@ -116,8 +116,8 @@ class IIIFDataExtractionFromMarc:
     def get_metadata(self, value):
         if hasattr(self, '_metadata'):
             return getattr(self, '_metadata')
-
-    def del_description(self):
+   
+    def del_metadata(self):
         if hasattr(self, '_description'):
             del self._description    
     
@@ -129,39 +129,47 @@ class IIIFMetadataBoxFromMarc:
 
     __name__ = "IIIFMetadataBoxFromMarc"
 
-    def __init__(self, a_marc_record, fields_needed):
-        self.field_names = fields_needed
+    def __init__(self, a_marc_record):
         self.fields = a_marc_record
         self.total = len(self.fields)
 
     def __dict__(self):
         output = {"metadata":[]}
         for field in self.fields:
-            output["metadata"].append({"label": field.name, "value": field.value}
+            output["metadata"].append(dict(field))
         return output
 
     def __repr__(self):
         return self.name + " with " + str(self.total) + " metadata fields"
 
     def __str__(self):
-        return str(dict(self))
+        output = "metadata:"
+        output += "\n"
+        for n_field in self.fields:
+            output += "\t" + str(n_field)
+        return output
 
-    def get_field_names(self):
-        if hasattr(self, "_field_names"):
-            setattr(self, "_field_names", value)
+    def get_fields(self):
+        output = []
+        if hasattr(self, "_fields"):
+            for n_field in getattr(self, "_fields"):
+                output.append("{}: {}".format(field.name, field.value))
+        return output
 
-    def set_field_names(self, value):
-        if isinstance(value, list):
-            for n_field_name in value:
-                if not isinstance(n_field_name, str):
-                    raise ValueError("There cannot be a non-string element in the field_names property")
-        else:
-            raise ValueError("IIIFMetadataBoxFromMarc field_names must be a list")
-        setattr(self, "_field_names", value)
+    def set_fields(self, value):
+        all_fields = [x for x in value.get("fields")]
+        for thing in all_fields:
+            keys = list(thing.keys())
+            edition_entries_match = [x for x in keys if re_compile("[5-8]").search(x)]
+            subjects_match = retriever_subject_entries([x for x in keys if x.startswith('6')])
+            added_entries_match = retrieve_added_entries([x for x in keys if re_compile("7[0-5]").search(x)])
+            linking_entries_match = retrieve_linking_entries([x for x in keys if re_compile("7[6-8]").search(x)])
+            series_entries_match = retrieve_series_entries([x for x in keys if re_compile("8[0-3]").search(x)])
+            hold_alt_graphics_etc_match = retrieve_misc_entries([x for x in keys if re_compile("8[4-8]").search(x)])
 
-    def field_names(self):
-        if hasattr(self, "_field_names"):
-            del self._field_names
+    def del_fields(self):
+        if hasattr(self, "_fields"):
+            del self._fields 
 
     def set_total(self, value):
         if isinstance(value, int):
@@ -177,6 +185,52 @@ class IIIFMetadataBoxFromMarc:
         if hasattr(self, "_total"):
             del self._total
 
-    field_names = property(get_field_names, set_field_names, del_field_names)
     fields = property(get_fields, set_fields, del_fields)
     total = property(get_total, set_total, del_total)
+
+
+class IIIFMEtadataField:
+
+    __name__ = "IIIFMetadataField"
+
+    def __init__(self, name, value):
+        self.field = name
+        self.value = value
+
+    def __repr__(self):
+        return "{} {}:{}".format(self.__name__. self.field, self.value)
+
+    def __str__(self):
+        return "{}: {}".format(self.field, self.value)
+
+    def __dict__(self):
+        return {"label": self.field, "value": self.value}
+
+    def get_field(self):
+        return geattr(self, "_field")
+
+    def set_field(self, value):
+        if isinstance(value, str):
+            setattr(self, "_field", value)
+        else:
+            raise ValueError("field must be a string")
+
+    def del_field(self):
+        if hasattr(self, "_field"):
+            del self._field
+
+    def get_value(self):
+        return getattr(self, "_value")
+
+    def set_value(self, value):
+        if isinstance(value, str):
+            setattr(self, "_field", value)
+        else:
+            raise ValueError("value must be a string")
+
+    def del_value(self):
+        if hasattr(self, "_value"):
+            del self._field
+
+    field = property(get_field, set_field, del_field)
+    value = property(get_value, set_value, del_value)
