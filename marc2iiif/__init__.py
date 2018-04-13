@@ -5,6 +5,93 @@ from os.path import isdir, isfile
 from pymarc import MARCReader
 from re import compile as re_compile
 
+LABEL_LOOKUP = {
+    "250": "Edition Statement",
+    "254": "Musical Presentation Statement",
+    "255": "Cartographic Mathemtical Data",
+    "256": "Computer File Characteristic",
+    "257": "Country of Producing Entity",
+    "258": "Philatelic Issue Data",
+    "260": "Publication, Distribution, etc (Imprint)",
+    "263": "Projected Publication Date",
+    "264": "Production, Publication, Publication, Distribution, Manufacture, and Copyright Notice",
+    "270": "Address",
+    "600": "Subject Added Entry - Personal Name",
+    "610": "Subject Added Entry - Corporate Name",
+    "611": "Subject Added Entry - Meeting Name",
+    "630": "Subject Added Entry - Uniform Title",
+    "647": "Subject Added Entry - Named Event",
+    "648": "Subject Added Entry - Chronological Term",
+    "650": "Subject Added Entry = Topical Term",
+    "651": "Subject Added Entry - Geographic Name",
+    "653": "Index Term - Uncontrolled",
+    "654": "Subject Added Entry - Faceted Topical Term",
+    "655": "Index Term - Genre/Form",
+    "656": "Index Term - Occupation",
+    "657": "Index Term - Function",
+    "658": "Index Term - Curriculum Objective",
+    "662": "Subject Added Entry - Hierarchical Place Name",
+    "690": "Local Subject",
+    "691": "Local Subject",
+    "692": "Local Subject",
+    "693": "Local Subject",
+    "694": "Local Subject",
+    "695": "Local Subject",
+    "696": "Local Subject",
+    "697": "Local Subject",
+    "698": "Local Subject",
+    "699": "Local Subject",
+    "700": "Added Entry - Personal Name",
+    "710": "Added Entry - Corporate Name",
+    "711": "Added Entry - Meeting Name",
+    "720": "Added Entry - Uncontrolled Name",
+    "730": "Added Entry - Uniform Title",
+    "740": "Added Entry - Uncontrolled Related/Analytical Title",
+    "751": "Added Entry - Geographic Name",
+    "752": "Added Entry - Hierarchical Place Name",
+    "753": "System Details Access to Computer File",
+    "754": "Added Entry - Taxonomic Identification",
+    "758": "Resource Identifier",
+    "760": "Main Entry Series Entry",
+    "762": "Subseries Entry",
+    "765": "Original Language Entry",
+    "767": "Translation Entry",
+    "770": "Supplement/Special Issue Entry",
+    "772": "Supplement Parent Entry",
+    "773": "Host Item Entry",
+    "774": "Constituent Unit Entry",
+    "775": "Other Edition Entry",
+    "776": "Additional Physical Form Entry",
+    "777": "Issued With Entry",
+    "780": "Preceding Entry",
+    "785": "Succeeding Entry",
+    "786": "Date Source Entry",
+    "787": "Other Relationship Entry",
+    "800": "Series Added Entry - Personal Name",
+    "810": "Series Added Entry - Corporate Name",
+    "811": "Series Added Entry - Meeting Name",
+    "830": "Series Added Entry - Uniform Title",
+    "841": "Holdings Coded Data Values",
+    "842": "Textual Physical form Designator",
+    "843": "Reproduction Note",
+    "844": "Name of Unit",
+    "845": "Terms Governing Use and Reproduction",
+    "850": "Holding Institution",
+    "852": "Location",
+    "853": "Captions and Pattern - Basic Bibliographic Unit",
+    "854": "Captions and Pattern - Supplementary Material",
+    "855": "Captions and Pattern - Indexes",
+    "856": "Electronic Location and Access",
+    "863": "Enumeration and Chronology- Basic Bibligraphic Unit",
+    "864": "Enumeration and Chronology - Supplementary MAterial",
+    "865": "Enumeration and Chronology - Indexes",
+    "866": "Textual Holdings - Basic Bibliographic Unit",
+    "867": "Textual Holdings - Supplementary Material",
+    "868": "Textual Holdings - Indexes",
+}
+
+
+
 class MarcFilesFromDisk:
 
     __name__ = "MarcFilesFromDisk"
@@ -48,7 +135,7 @@ class IIIFDataExtractionFromMarc:
         else:
             self.label = a_marc_record
             self.description  = a_marc_record
-            self.metadata = IIIFMetadataBoxFromMarc(a_marc_record)
+            self.metadata = IIIFMetadataBoxFromMarc.from_dict(a_marc_record)
 
     def set_label(self, value):
         if not isinstance(value, dict):
@@ -85,7 +172,6 @@ class IIIFDataExtractionFromMarc:
                     for subfield in subfields:
                         val = [v for x,v in subfield.items()][0]
                         note += " " + val
-                    print(note)
                 if description_match:
                     subfields = thing.get(list(thing.keys())[0]).get("subfields")
                     for subfield in subfields:
@@ -113,7 +199,7 @@ class IIIFDataExtractionFromMarc:
         else:
             raise ValueError("must place an instance of IIIFMetadataBoxFromMarc into this field")
 
-    def get_metadata(self, value):
+    def get_metadata(self):
         if hasattr(self, '_metadata'):
             return getattr(self, '_metadata')
    
@@ -130,8 +216,7 @@ class IIIFMetadataBoxFromMarc:
     __name__ = "IIIFMetadataBoxFromMarc"
 
     def __init__(self, a_marc_record):
-        self.fields = a_marc_record
-        self.total = len(self.fields)
+        self.source = a_marc_record
 
     def __dict__(self):
         output = {"metadata":[]}
@@ -140,32 +225,70 @@ class IIIFMetadataBoxFromMarc:
         return output
 
     def __repr__(self):
-        return self.name + " with " + str(self.total) + " metadata fields"
+        return self.__name__ + " with " + str(self.total) + " metadata fields"
 
     def __str__(self):
         output = "metadata:"
         output += "\n"
         for n_field in self.fields:
-            output += "\t" + str(n_field)
+            output += "\t" + str(n_field) + "\n"
         return output
 
     def get_fields(self):
         output = []
         if hasattr(self, "_fields"):
             for n_field in getattr(self, "_fields"):
-                output.append("{}: {}".format(field.name, field.value))
+                output.append("{}: {}".format(n_field.field, n_field.value))
         return output
 
     def set_fields(self, value):
-        all_fields = [x for x in value.get("fields")]
+        for a_field in value:
+            if not isinstance(a_field, IIIFMetadataField):
+                raise ValueError("fields can only contain IIIFMetadataField instances")
+        self._fields = value
+
+    @classmethod
+    def from_dict(cls, a_dict):
+        def retrieve_entries(list_of_fields):
+            output = []
+            if list_of_fields:
+                for n_item in list_of_fields:
+                    label = LABEL_LOOKUP.get(n_item[0])
+                    subfields = n_item[1].get("subfields")
+                    if int(n_item[0]) < 800:
+                        values = [x for x in subfields if not re_compile("[0-9]").search(str(x))]
+                    else:
+                        values = [x for x in subfields if re_compile("[0-9]").search(str(x))]
+                    full_value = ""
+                    for a_dict in values:
+                        full_value += " " + a_dict.get(list(a_dict.keys())[0])
+                    output.append((label, full_value.strip()))
+            return output
+
+        all_fields = [x for x in a_dict.get("fields")]
+        output = []
+        new = cls(a_dict)
         for thing in all_fields:
             keys = list(thing.keys())
-            edition_entries_match = [x for x in keys if re_compile("[5-8]").search(x)]
-            subjects_match = retriever_subject_entries([x for x in keys if x.startswith('6')])
-            added_entries_match = retrieve_added_entries([x for x in keys if re_compile("7[0-5]").search(x)])
-            linking_entries_match = retrieve_linking_entries([x for x in keys if re_compile("7[6-8]").search(x)])
-            series_entries_match = retrieve_series_entries([x for x in keys if re_compile("8[0-3]").search(x)])
-            hold_alt_graphics_etc_match = retrieve_misc_entries([x for x in keys if re_compile("8[4-8]").search(x)])
+            output += retrieve_entries([(x, thing.get(x)) for x in keys if re_compile("2[5-8][0-9]").search(x)])
+            output += retrieve_entries([(x, thing.get(x)) for x in keys if x.startswith('6')])
+            output += retrieve_entries([(x, thing.get(x)) for x in keys if re_compile("7[0-5][0-9]").search(x)])
+            output += retrieve_entries([(x, thing.get(x)) for x in keys if re_compile("7[6-8][0-9]").search(x)])
+            output += retrieve_entries([(x, thing.get(x)) for x in keys if re_compile("8[0-3][0-9]").search(x)])
+            output += retrieve_entries([(x, thing.get(x)) for x in keys if re_compile("8[4-8][0-9]").search(x)])
+        for label, value in output:
+            field = IIIFMetadataField(label, value)
+            new.add_field(field)
+        return new        
+
+    def add_field(self, a_field):
+        if isinstance(a_field, IIIFMetadataField):
+            if hasattr(self, '_fields'):
+                self._fields.append(a_field)
+            else:
+                self.fields = [a_field]
+        else:
+            raise ValueError("fields can only contain IIIFMetadataFields")
 
     def del_fields(self):
         if hasattr(self, "_fields"):
@@ -189,7 +312,7 @@ class IIIFMetadataBoxFromMarc:
     total = property(get_total, set_total, del_total)
 
 
-class IIIFMEtadataField:
+class IIIFMetadataField:
 
     __name__ = "IIIFMetadataField"
 
@@ -207,7 +330,7 @@ class IIIFMEtadataField:
         return {"label": self.field, "value": self.value}
 
     def get_field(self):
-        return geattr(self, "_field")
+        return getattr(self, "_field")
 
     def set_field(self, value):
         if isinstance(value, str):
@@ -224,13 +347,17 @@ class IIIFMEtadataField:
 
     def set_value(self, value):
         if isinstance(value, str):
-            setattr(self, "_field", value)
+            setattr(self, "_value", value)
         else:
             raise ValueError("value must be a string")
 
     def del_value(self):
         if hasattr(self, "_value"):
             del self._field
+
+    @classmethod
+    def load_from_dict(cls, a_subfield):
+        pass
 
     field = property(get_field, set_field, del_field)
     value = property(get_value, set_value, del_value)

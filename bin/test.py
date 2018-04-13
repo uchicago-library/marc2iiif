@@ -13,7 +13,6 @@ def find_marc_files(path):
     """
     MarcFilesFromDisk(path)
 
-
 def main():
     arguments = ArgumentParser(
         description="A cli module to prototype the marc2iiif converter; version " + __VERSION__)
@@ -25,8 +24,7 @@ def main():
         marc_readers = MarcFilesFromDisk(location)
         for n in marc_readers:
             p = IIIFDataExtractionFromMarc(n)
-            print(p.label)
-            print(p.description)
+            print(dict(p))
         return 0
     except KeyboardInterrupt:
         return 131
