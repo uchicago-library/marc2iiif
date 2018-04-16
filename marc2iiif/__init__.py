@@ -1,7 +1,7 @@
 
 from itertools import chain
 from os import scandir
-from os.path import isdir, isfile
+from os.path import dirname, isdir, isfile
 from pymarc import MARCReader
 from re import compile as re_compile
 
@@ -99,30 +99,41 @@ class MarcFilesFromDisk:
     def __init__(self, file_path):
 
         if isdir(file_path):
-            self.path = file_path
+            self.records = self._build_generator_of_files(file_path, self.search_for_marc_file)
         elif isfile(file_path):
-            self.file = file_path
+            self.records = self._build_generator_of_files(file_path, self.match_single_file)
         else:
             msg = "{} is neither a directory nor a regular file on this disk!".format(file_path)
             raise ValueError(msg)
 
     def __iter__(self):
-        if getattr(self, 'path', None):
-            generator = self._find_files_on_disk(self.path)
-            return generator
-        else:
-            return [x.as_dict() for x in MARCReader(open(file_path, 'rb'))][0]
+        return self.records
 
-    def _find_files_on_disk(self, a_path):
-        """a function to find marc files in a particular directory on-disk
-        """
-        for n_item in scandir(a_path):
-            if n_item.is_file() and n_item.path.endswith(".mrc"):
-                reader = MARCReader(open(n_item.path,'rb'))
+    def match_single_file(self, src, pot_match=None):
+        if pot_match:
+            if src == pot_match:
+                return True
+        return False
+
+    def search_for_marc_file(self, src, pot_match=None):
+        if src.endswith('mrc'):
+            return True
+        else:
+            return False
+
+    def _build_generator_of_files(self, a_path, callback=None):
+        if isfile(a_path):
+            path = dirname(a_path)
+        else:
+            path = a_path
+        for n_item in scandir(path):
+            if n_item.is_dir():
+                yield from self._build_generator_of_files(n_item.path, callback=callback)
+            elif n_item.is_file() and callback(n_item.path, pot_match=a_path):
+                reader = MARCReader(open(n_item.path, 'rb'))
                 for record in reader:
                     yield record.as_dict()
-            elif n_item.is_dir():
-                yield from self._find_files_on_disk(n_item.path)
+
 
 class IIIFDataExtractionFromMarc:
 
@@ -136,6 +147,21 @@ class IIIFDataExtractionFromMarc:
             self.label = a_marc_record
             self.description  = a_marc_record
             self.metadata = IIIFMetadataBoxFromMarc.from_dict(a_marc_record)
+            
+    def __repr__(self):
+        return self.__name__ + " for " + self.label
+
+    def __str__(self):
+        return "label: " + self.label + ", description: " + self.description
+
+    def to_dict(self):
+        out = {}
+        out["@context"] = "https://iiif.io/api/presentations/2/context.json"
+        out["@id"] = "https://iiif-manifest.lib.uchicago.edu/"
+        out["metadata"] = self.metadata.to_dict()
+        out["description"] = self.description
+        out["label"] = self.label
+        return out
 
     def set_label(self, value):
         if not isinstance(value, dict):
@@ -154,7 +180,7 @@ class IIIFDataExtractionFromMarc:
 
     def del_label(self):
         if hasattr(self, '_title'):
-            del self._title
+            delattr(self, "_title")
 
     def set_description(self, value):
         if not isinstance(value, dict):
@@ -191,7 +217,7 @@ class IIIFDataExtractionFromMarc:
     
     def del_description(self):
         if hasattr(self, '_description'):
-            del self._description
+            delattr(self, "_descripton")
 
     def set_metadata(self, value):
         if isinstance(value, IIIFMetadataBoxFromMarc):
@@ -204,8 +230,8 @@ class IIIFDataExtractionFromMarc:
             return getattr(self, '_metadata')
    
     def del_metadata(self):
-        if hasattr(self, '_description'):
-            del self._description    
+        if hasattr(self, '_metadata'):
+            delattr(self, "_metadata")
     
     label = property(get_label, set_label, del_label)
     description = property(get_description, set_description, del_description)
@@ -215,14 +241,8 @@ class IIIFMetadataBoxFromMarc:
 
     __name__ = "IIIFMetadataBoxFromMarc"
 
-    def __init__(self, a_marc_record):
-        self.source = a_marc_record
-
-    def __dict__(self):
-        output = {"metadata":[]}
-        for field in self.fields:
-            output["metadata"].append(dict(field))
-        return output
+    def __init__(self, fields):
+        self.fields = fields
 
     def __repr__(self):
         return self.__name__ + " with " + str(self.total) + " metadata fields"
@@ -234,11 +254,17 @@ class IIIFMetadataBoxFromMarc:
             output += "\t" + str(n_field) + "\n"
         return output
 
+    def to_dict(self):
+        out = []
+        for a_field in self.fields:
+            out.append(a_field)
+        return out
+
     def get_fields(self):
         output = []
         if hasattr(self, "_fields"):
             for n_field in getattr(self, "_fields"):
-                output.append("{}: {}".format(n_field.field, n_field.value))
+                output.append({"field": n_field.field, "label": n_field.value})
         return output
 
     def set_fields(self, value):
@@ -249,39 +275,28 @@ class IIIFMetadataBoxFromMarc:
 
     @classmethod
     def from_dict(cls, a_dict):
-        def retrieve_entries(list_of_fields):
-            output = []
-            if list_of_fields:
-                for n_item in list_of_fields:
-                    label = LABEL_LOOKUP.get(n_item[0])
-                    subfields = n_item[1].get("subfields")
-                    if int(n_item[0]) < 800:
-                        values = [x for x in subfields if not re_compile("[0-9]").search(str(x))]
-                    else:
-                        values = [x for x in subfields if re_compile("[0-9]").search(str(x))]
-                    full_value = ""
-                    for a_dict in values:
-                        full_value += " " + a_dict.get(list(a_dict.keys())[0])
-                    output.append((label, full_value.strip()))
-            return output
+        def default_identifier_extraction(self, value):
+            return value.split("https://pi.lib.uchicago.edu/1001/")[1]
 
-        all_fields = [x for x in a_dict.get("fields")]
-        output = []
-        new = cls(a_dict)
-        for thing in all_fields:
-            keys = list(thing.keys())
-            output += retrieve_entries([(x, thing.get(x)) for x in keys if re_compile("2[5-8][0-9]").search(x)])
-            output += retrieve_entries([(x, thing.get(x)) for x in keys if x.startswith('6')])
-            output += retrieve_entries([(x, thing.get(x)) for x in keys if re_compile("7[0-5][0-9]").search(x)])
-            output += retrieve_entries([(x, thing.get(x)) for x in keys if re_compile("7[6-8][0-9]").search(x)])
-            output += retrieve_entries([(x, thing.get(x)) for x in keys if re_compile("8[0-3][0-9]").search(x)])
-            output += retrieve_entries([(x, thing.get(x)) for x in keys if re_compile("8[4-8][0-9]").search(x)])
-        for label, value in output:
-            field = IIIFMetadataField(label, value)
-            new.add_field(field)
-        return new        
+        fields = []
+        for thing in [x for x in a_dict.get("fields")]:
+            keys = [key for key in thing.keys() if not key.startswith('00')]
+            m = [(LABEL_LOOKUP.get(x), thing.get(x).get("subfields")) for x in keys]
+            if m:
+                full_value = ""
+                for n in m[0][1]:
+                    full_value += " " + (n.get(list(n.keys())[0]))
+                    if m[0][0]:
+                        field = IIIFMetadataField(m[0][0], full_value)
+                        fields.append(field)
+                if m[0][0] and 'Electronic Location and Access' in m[0][0]:
+                    print(default_identifier_extraction(full_value))
+ 
+        return cls(fields)
+
 
     def add_field(self, a_field):
+
         if isinstance(a_field, IIIFMetadataField):
             if hasattr(self, '_fields'):
                 self._fields.append(a_field)
@@ -306,7 +321,7 @@ class IIIFMetadataBoxFromMarc:
 
     def del_total(self):
         if hasattr(self, "_total"):
-            del self._total
+            delattr(self, "_total")
 
     fields = property(get_fields, set_fields, del_fields)
     total = property(get_total, set_total, del_total)
@@ -321,7 +336,7 @@ class IIIFMetadataField:
         self.value = value
 
     def __repr__(self):
-        return "{} {}:{}".format(self.__name__. self.field, self.value)
+        return "{}:{}".format(self.field, self.value)
 
     def __str__(self):
         return "{}: {}".format(self.field, self.value)
@@ -340,7 +355,8 @@ class IIIFMetadataField:
 
     def del_field(self):
         if hasattr(self, "_field"):
-            del self._field
+            delattr(self, "_field")
+            delattr(self, "_field")
 
     def get_value(self):
         return getattr(self, "_value")
@@ -353,7 +369,7 @@ class IIIFMetadataField:
 
     def del_value(self):
         if hasattr(self, "_value"):
-            del self._field
+            delattr(self, "_value")
 
     @classmethod
     def load_from_dict(cls, a_subfield):

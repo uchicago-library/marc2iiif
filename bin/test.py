@@ -2,6 +2,7 @@
 """
 
 from argparse import ArgumentParser
+import json
 from os import _exit, scandir
 from marc2iiif import MarcFilesFromDisk, IIIFDataExtractionFromMarc
 from sys import stdout
@@ -24,7 +25,7 @@ def main():
         marc_readers = MarcFilesFromDisk(location)
         for n in marc_readers:
             p = IIIFDataExtractionFromMarc(n)
-            print(dict(p))
+            #print(json.dumps(p.to_dict(), indent=4))
         return 0
     except KeyboardInterrupt:
         return 131
