@@ -5,123 +5,50 @@ from os.path import dirname, isdir, isfile
 from pymarc import MARCReader
 from re import compile as re_compile
 
-LABEL_LOOKUP = {
-    "250": "Edition Statement",
-    "254": "Musical Presentation Statement",
-    "255": "Cartographic Mathemtical Data",
-    "256": "Computer File Characteristic",
-    "257": "Country of Producing Entity",
-    "258": "Philatelic Issue Data",
-    "260": "Publication, Distribution, etc (Imprint)",
-    "263": "Projected Publication Date",
-    "264": "Production, Publication, Publication, Distribution, Manufacture, and Copyright Notice",
-    "270": "Address",
-    "600": "Subject Added Entry - Personal Name",
-    "610": "Subject Added Entry - Corporate Name",
-    "611": "Subject Added Entry - Meeting Name",
-    "630": "Subject Added Entry - Uniform Title",
-    "647": "Subject Added Entry - Named Event",
-    "648": "Subject Added Entry - Chronological Term",
-    "650": "Subject Added Entry = Topical Term",
-    "651": "Subject Added Entry - Geographic Name",
-    "653": "Index Term - Uncontrolled",
-    "654": "Subject Added Entry - Faceted Topical Term",
-    "655": "Index Term - Genre/Form",
-    "656": "Index Term - Occupation",
-    "657": "Index Term - Function",
-    "658": "Index Term - Curriculum Objective",
-    "662": "Subject Added Entry - Hierarchical Place Name",
-    "690": "Local Subject",
-    "691": "Local Subject",
-    "692": "Local Subject",
-    "693": "Local Subject",
-    "694": "Local Subject",
-    "695": "Local Subject",
-    "696": "Local Subject",
-    "697": "Local Subject",
-    "698": "Local Subject",
-    "699": "Local Subject",
-    "700": "Added Entry - Personal Name",
-    "710": "Added Entry - Corporate Name",
-    "711": "Added Entry - Meeting Name",
-    "720": "Added Entry - Uncontrolled Name",
-    "730": "Added Entry - Uniform Title",
-    "740": "Added Entry - Uncontrolled Related/Analytical Title",
-    "751": "Added Entry - Geographic Name",
-    "752": "Added Entry - Hierarchical Place Name",
-    "753": "System Details Access to Computer File",
-    "754": "Added Entry - Taxonomic Identification",
-    "758": "Resource Identifier",
-    "760": "Main Entry Series Entry",
-    "762": "Subseries Entry",
-    "765": "Original Language Entry",
-    "767": "Translation Entry",
-    "770": "Supplement/Special Issue Entry",
-    "772": "Supplement Parent Entry",
-    "773": "Host Item Entry",
-    "774": "Constituent Unit Entry",
-    "775": "Other Edition Entry",
-    "776": "Additional Physical Form Entry",
-    "777": "Issued With Entry",
-    "780": "Preceding Entry",
-    "785": "Succeeding Entry",
-    "786": "Date Source Entry",
-    "787": "Other Relationship Entry",
-    "800": "Series Added Entry - Personal Name",
-    "810": "Series Added Entry - Corporate Name",
-    "811": "Series Added Entry - Meeting Name",
-    "830": "Series Added Entry - Uniform Title",
-    "841": "Holdings Coded Data Values",
-    "842": "Textual Physical form Designator",
-    "843": "Reproduction Note",
-    "844": "Name of Unit",
-    "845": "Terms Governing Use and Reproduction",
-    "850": "Holding Institution",
-    "852": "Location",
-    "853": "Captions and Pattern - Basic Bibliographic Unit",
-    "854": "Captions and Pattern - Supplementary Material",
-    "855": "Captions and Pattern - Indexes",
-    "856": "Electronic Location and Access",
-    "863": "Enumeration and Chronology- Basic Bibligraphic Unit",
-    "864": "Enumeration and Chronology - Supplementary MAterial",
-    "865": "Enumeration and Chronology - Indexes",
-    "866": "Textual Holdings - Basic Bibliographic Unit",
-    "867": "Textual Holdings - Supplementary Material",
-    "868": "Textual Holdings - Indexes",
-}
+from .constants import LABEL_LOOKUP
+from .utils import default_identifier_extraction, match_single_file, search_for_marc_file
 
-
+# TODO write abstract file reader class and inherit MarcFilesFromDisk from that
 
 class MarcFilesFromDisk:
-
+    """a class to be used for reading MARC records from disk
+    """
     __name__ = "MarcFilesFromDisk"
 
     def __init__(self, file_path):
+        """instantiates an instance of MarcFilesFromDisk
 
+        :param str file_path: an absolute file path accessible on the machine running the program
+
+        :rtype :instance:`MarcFilesFromdisk`
+        """
+        # check if the path is a directory in which case there are likely to be more than 
+        # one more records to evaluate
         if isdir(file_path):
-            self.records = self._build_generator_of_files(file_path, self.search_for_marc_file)
+            self.records = self._build_generator_of_files(file_path, search_for_marc_file)
+        # check of the path is a file in which case there is only one marc record in this batch
         elif isfile(file_path):
-            self.records = self._build_generator_of_files(file_path, self.match_single_file)
+            self.records = self._build_generator_of_files(file_path, match_single_file)
         else:
             msg = "{} is neither a directory nor a regular file on this disk!".format(file_path)
             raise ValueError(msg)
 
     def __iter__(self):
+        """a method to iterate through the records in the instance
+
+        :rtype lis
+        """
         return self.records
 
-    def match_single_file(self, src, pot_match=None):
-        if pot_match:
-            if src == pot_match:
-                return True
-        return False
-
-    def search_for_marc_file(self, src, pot_match=None):
-        if src.endswith('mrc'):
-            return True
-        else:
-            return False
-
     def _build_generator_of_files(self, a_path, callback=None):
+        """a private method to build a generator out of the files in the inputted file_path
+
+        It will return a generator of MARC records as dictionaries that look like
+        {"fields":}
+        :param str a_path: a particular path on-disk
+        :param str callback: a function to use for checking if the path is a file and
+        satisfies the requirement
+        """
         if isfile(a_path):
             path = dirname(a_path)
         else:
@@ -134,9 +61,9 @@ class MarcFilesFromDisk:
                 for record in reader:
                     yield record.as_dict()
 
-
 class IIIFDataExtractionFromMarc:
-
+    """a class to be used for extracting IIIF relevant data from a MARC record 
+    """
     __name__ = "IIIFDataExtractionFromMarc"
 
     def __init__(self, a_marc_record):
@@ -157,7 +84,7 @@ class IIIFDataExtractionFromMarc:
     def to_dict(self):
         out = {}
         out["@context"] = "https://iiif.io/api/presentations/2/context.json"
-        out["@id"] = "https://iiif-manifest.lib.uchicago.edu/"
+        out["@id"] = "https://iiif-manifest.lib.uchicago.edu/" + self.metadata.identifier
         out["metadata"] = self.metadata.to_dict()
         out["description"] = self.description
         out["label"] = self.label
@@ -232,7 +159,7 @@ class IIIFDataExtractionFromMarc:
     def del_metadata(self):
         if hasattr(self, '_metadata'):
             delattr(self, "_metadata")
-    
+
     label = property(get_label, set_label, del_label)
     description = property(get_description, set_description, del_description)
     metadata = property(get_metadata, set_metadata, del_metadata)
@@ -241,7 +168,8 @@ class IIIFMetadataBoxFromMarc:
 
     __name__ = "IIIFMetadataBoxFromMarc"
 
-    def __init__(self, fields):
+    def __init__(self, identifier, fields):
+        self.identifier = identifier
         self.fields = fields
 
     def __repr__(self):
@@ -275,9 +203,6 @@ class IIIFMetadataBoxFromMarc:
 
     @classmethod
     def from_dict(cls, a_dict):
-        def default_identifier_extraction(self, value):
-            return value.split("https://pi.lib.uchicago.edu/1001/")[1]
-
         fields = []
         for thing in [x for x in a_dict.get("fields")]:
             keys = [key for key in thing.keys() if not key.startswith('00')]
@@ -290,9 +215,14 @@ class IIIFMetadataBoxFromMarc:
                         field = IIIFMetadataField(m[0][0], full_value)
                         fields.append(field)
                 if m[0][0] and 'Electronic Location and Access' in m[0][0]:
-                    print(default_identifier_extraction(full_value))
- 
-        return cls(fields)
+
+                    pot_identifier = default_identifier_extraction(full_value)
+                    if pot_identifier[0]:
+                        identifier = pot_identifier[1]
+                    else:
+                        identifer = ""
+
+        return cls(identifier, fields)
 
 
     def add_field(self, a_field):
@@ -323,6 +253,18 @@ class IIIFMetadataBoxFromMarc:
         if hasattr(self, "_total"):
             delattr(self, "_total")
 
+    def set_identifier(self, value):
+            setattr(self, '_identifier', value)
+
+    def get_identifier(self):
+        if hasattr(self, '_identifier'):
+            return getattr(self, '_identifier')
+   
+    def del_identifier(self):
+        if hasattr(self, '_identifier'):
+            delattr(self, '_identifier')
+
+    identifier = property(get_identifier, set_identifier, del_identifier)
     fields = property(get_fields, set_fields, del_fields)
     total = property(get_total, set_total, del_total)
 
