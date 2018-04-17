@@ -28,15 +28,14 @@ def main():
             directories = dirname(json_id).split(sep)
             if re_compile("^([A-Z][:])").match(json_id):
                 drive_name = re_compile("^([A-Z][:])").match(json_id).group(1)
-                directories[0] = drive_name + "\\"                
-            print(directories)
-            """
-            new_path = ""
-            for part in directories:
-                new_path = join(new_path, part)
-                print(new_path.replace(sep, "/"))
-            """
-            #json.dump(p.to_dict(), indent=4))
+                directory_path = '/'.join(directories[1:])
+                new = drive_name + sep
+                for f in directory_path.split("/"):
+                    new = join(new, f)
+                    if not exists(new):
+                        mkdir(new)
+                with open(json_id, "w+", encoding="utf-8") as wf:
+                    json.dump(data, wf, indent=4)
         return 0
     except KeyboardInterrupt:
         return 131
