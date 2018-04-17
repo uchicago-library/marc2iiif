@@ -1,6 +1,8 @@
 """utility functions for marc2iiif library
 """
 
+from sys import stderr
+
 def match_single_file(src, pot_match=None):
     if pot_match:
         if src == pot_match:
@@ -35,9 +37,17 @@ def default_identifier_extraction(value):
     elif 'https' in value:
         items = value.split("https://pi.lib.uchicago.edu/1001/")
     else:
+        items = []
         stderr.write("{} is not a valid URL".format(value))
     if len(items) == 2:
         out = (True, items[1])
     else:
        out = (False, None)
     return out
+
+def combine_subfields_into_one_value(list_of_dicts):
+    single_string = ""
+    for a_dict in list_of_dicts:
+        single_string += " " + a_dict.get(list(a_dict.keys())[0])
+    return single_string.strip()
+ 

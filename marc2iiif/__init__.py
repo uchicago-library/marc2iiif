@@ -5,8 +5,8 @@ from os.path import dirname, isdir, isfile
 from pymarc import MARCReader
 from re import compile as re_compile
 
-from .constants import LABEL_LOOKUP
-from .utils import default_identifier_extraction, match_single_file, search_for_marc_file
+from .constants import DESCRIPTION_LOOKUPS, LABEL_LOOKUP, TITLE_LOOKUPS
+from .utils import combine_subfields_into_one_value, default_identifier_extraction, match_single_file, search_for_marc_file
 
 # TODO write abstract file reader class and inherit MarcFilesFromDisk from that
 
@@ -66,85 +66,35 @@ class IIIFDataExtractionFromMarc:
     """
     __name__ = "IIIFDataExtractionFromMarc"
 
-    def __init__(self, a_marc_record):
-        if not isinstance(a_marc_record, dict):
-            msg = "{} can only take a dict passed to init".format(self.__name__)
-            raise ValueError(msg)
-        else:
-            self.label = a_marc_record
-            self.description  = a_marc_record
-            self.metadata = IIIFMetadataBoxFromMarc.from_dict(a_marc_record)
+    def __init__(self, metadata):
+        """initializes an instance of the class
+
+            :param str label: the 
+        """
+        self.metadata = metadata
             
     def __repr__(self):
-        return self.__name__ + " for " + self.label
+        return self.__name__
 
     def __str__(self):
-        return "label: " + self.label + ", description: " + self.description
+        return self.__name__
 
     def to_dict(self):
         out = {}
         out["@context"] = "https://iiif.io/api/presentations/2/context.json"
         out["@id"] = "https://iiif-manifest.lib.uchicago.edu/" + self.metadata.identifier
         out["metadata"] = self.metadata.to_dict()
-        out["description"] = self.description
-        out["label"] = self.label
+        out["description"] = self.metadata.description
+        out["label"] = self.metadata.label
         return out
 
-    def set_label(self, value):
-        if not isinstance(value, dict):
-            raise ValueError("must pass a marc record as a dictionary to set label property")
-        else:
-            title_subfields =  list(chain(*[x.get("subfields") for x in [x.get("245") for x in value.get("fields") if x.get("245")]]))
-            main_title_search = [x for x in title_subfields if x.get("a")]
-            if main_title_search:
-                setattr(self, '_title', main_title_search[0].get("a"))
-            else:
-                raise ValueError("title could not be found in this marc record")
+    @classmethod
+    def from_dict(cls, dictified_marc_record):
+        if not isinstance(dictified_marc_record, dict):
+            raise ValueError("can only instantiate class from a dict")
 
-    def get_label(self):
-        if hasattr(self, '_title'):
-            return getattr(self, '_title')
-
-    def del_label(self):
-        if hasattr(self, '_title'):
-            delattr(self, "_title")
-
-    def set_description(self, value):
-        if not isinstance(value, dict):
-            raise ValueError("must pass a marc record as a dictionary to set description property")
-        else:
-            all_fields = [x for x in value.get("fields")]
-            note = ""
-            description = ""
-            for thing in all_fields:
-                keys = list(thing.keys())
-                description_match = [x for x in keys if x.startswith('3')]
-                note_match = [x for x in keys if x.startswith('5')]
-                if note_match:
-                    subfields = thing.get(list(thing.keys())[0]).get("subfields")
-                    for subfield in subfields:
-                        val = [v for x,v in subfield.items()][0]
-                        note += " " + val
-                if description_match:
-                    subfields = thing.get(list(thing.keys())[0]).get("subfields")
-                    for subfield in subfields:
-                        val = [v for x,v in subfield.items()][0]
-                        description += " " + val
-            output = ""
-            if note != "":
-                output += note
-            if description != "":
-                output += " " + description
-            output = output.strip()
-            setattr(self, "_description", output)
-
-    def get_description(self):
-        if hasattr(self, '_description'):
-            return getattr(self, '_description')
-    
-    def del_description(self):
-        if hasattr(self, '_description'):
-            delattr(self, "_descripton")
+        new_metadata = IIIFMetadataBoxFromMarc.from_dict(dictified_marc_record)
+        return cls(new_metadata)
 
     def set_metadata(self, value):
         if isinstance(value, IIIFMetadataBoxFromMarc):
@@ -160,15 +110,15 @@ class IIIFDataExtractionFromMarc:
         if hasattr(self, '_metadata'):
             delattr(self, "_metadata")
 
-    label = property(get_label, set_label, del_label)
-    description = property(get_description, set_description, del_description)
     metadata = property(get_metadata, set_metadata, del_metadata)
 
 class IIIFMetadataBoxFromMarc:
 
     __name__ = "IIIFMetadataBoxFromMarc"
 
-    def __init__(self, identifier, fields):
+    def __init__(self, label, description, identifier, fields):
+        self.label = label
+        self.description = description
         self.identifier = identifier
         self.fields = fields
 
@@ -188,45 +138,45 @@ class IIIFMetadataBoxFromMarc:
             out.append(a_field)
         return out
 
-    def get_fields(self):
-        output = []
-        if hasattr(self, "_fields"):
-            for n_field in getattr(self, "_fields"):
-                output.append({"field": n_field.field, "label": n_field.value})
-        return output
-
-    def set_fields(self, value):
-        for a_field in value:
-            if not isinstance(a_field, IIIFMetadataField):
-                raise ValueError("fields can only contain IIIFMetadataField instances")
-        self._fields = value
-
     @classmethod
     def from_dict(cls, a_dict):
         fields = []
+        identifier = ""
+        label = ""
+        description = ""
         for thing in [x for x in a_dict.get("fields")]:
             keys = [key for key in thing.keys() if not key.startswith('00')]
-            m = [(LABEL_LOOKUP.get(x), thing.get(x).get("subfields")) for x in keys]
+            description_lookups = [thing.get(x).get("subfields") for x in keys if x in DESCRIPTION_LOOKUPS]
+            title_ops = [thing.get(x).get("subfields") for x in keys if x in TITLE_LOOKUPS]
+            m = [(LABEL_LOOKUP.get(x), thing.get(x).get("subfields")) for x in keys if x in LABEL_LOOKUP.keys()]
+            if title_ops:
+                label = (title_ops[0][0]).get("a")
+                if label.endswith(":") or label.endswith("/") or label.endswith(" ") or label.endswith("=") or label.endswith("."):
+                    label = label[:-1]
+                    label[:-1]
+                    label.strip()
+                else:
+                    label = "An untitled Cultural Heritage Object"
+            if description_lookups:
+                description = combine_subfields_into_one_value(description_lookups[0])
+            else:
+                description = "This Cultural Heritage Object does not have a description"
             if m:
-                full_value = ""
-                for n in m[0][1]:
-                    full_value += " " + (n.get(list(n.keys())[0]))
-                    if m[0][0]:
-                        field = IIIFMetadataField(m[0][0], full_value)
-                        fields.append(field)
-                if m[0][0] and 'Electronic Location and Access' in m[0][0]:
-
-                    pot_identifier = default_identifier_extraction(full_value)
+                field_name = m[0][0]
+                subfield_list = m[0][1]
+                field_value = combine_subfields_into_one_value(subfield_list)
+                field = IIIFMetadataField(field_name, field_value)
+                fields.append(field)
+                if field_name == 'Electronic Location and Access':
+                    pot_identifier = default_identifier_extraction(field_value)
                     if pot_identifier[0]:
                         identifier = pot_identifier[1]
-                    else:
-                        identifer = ""
+                else:
+                    identifier = ""
 
-        return cls(identifier, fields)
-
+        return cls(label, description, identifier, fields)
 
     def add_field(self, a_field):
-
         if isinstance(a_field, IIIFMetadataField):
             if hasattr(self, '_fields'):
                 self._fields.append(a_field)
@@ -235,8 +185,47 @@ class IIIFMetadataBoxFromMarc:
         else:
             raise ValueError("fields can only contain IIIFMetadataFields")
 
+    def get_fields(self):
+        output = []
+        if hasattr(self, "_fields"):
+            for n_field in getattr(self, "_fields"):
+                output.append({"field": n_field.label, "label": n_field.value})
+        return output
+
+    def set_fields(self, value):
+        for a_field in value:
+            if not isinstance(a_field, IIIFMetadataField):
+                raise ValueError("fields can only contain IIIFMetadataField instances")
+        self._fields = value
+
     def del_fields(self):
         if hasattr(self, "_fields"):
+            delattr(self, "_fields")
+
+    def get_label(self):
+        if hasattr(self, "_label"):
+            return getattr(self, "_label")
+
+    def set_label(self, value):
+        if isinstance(value, str):
+            setattr(self, "_label", value)
+        else:
+            raise ValueError("total property can only be an integer")
+
+    def del_label(self):
+        if hasattr(self, "_label"):
+            del self._fields 
+
+    def get_description(self):
+        if hasattr(self, "_description"):
+            return getattr(self, "_description")
+
+    def set_description(self, value):
+        if isinstance(value, str):
+            setattr(self, "_description", value)
+
+    def del_description(self):
+        if hasattr(self, "_description"):
             del self._fields 
 
     def set_total(self, value):
@@ -265,40 +254,40 @@ class IIIFMetadataBoxFromMarc:
             delattr(self, '_identifier')
 
     identifier = property(get_identifier, set_identifier, del_identifier)
+    label = property(get_label, set_label, del_label)
+    description = property(get_description, set_description, del_description)
     fields = property(get_fields, set_fields, del_fields)
     total = property(get_total, set_total, del_total)
-
 
 class IIIFMetadataField:
 
     __name__ = "IIIFMetadataField"
 
     def __init__(self, name, value):
-        self.field = name
+        self.label = name
         self.value = value
 
     def __repr__(self):
-        return "{}:{}".format(self.field, self.value)
+        return "{}:{}".format(self.label, self.value)
 
     def __str__(self):
-        return "{}: {}".format(self.field, self.value)
+        return "{}: {}".format(self.label, self.value)
 
     def __dict__(self):
-        return {"label": self.field, "value": self.value}
+        return {"label": self.label, "value": self.value}
 
-    def get_field(self):
-        return getattr(self, "_field")
+    def get_label(self):
+        return getattr(self, "_label")
 
-    def set_field(self, value):
+    def set_label(self, value):
         if isinstance(value, str):
-            setattr(self, "_field", value)
+            setattr(self, "_label", value)
         else:
             raise ValueError("field must be a string")
 
-    def del_field(self):
-        if hasattr(self, "_field"):
-            delattr(self, "_field")
-            delattr(self, "_field")
+    def del_label(self):
+        if hasattr(self, "_label"):
+            delattr(self, "_label")
 
     def get_value(self):
         return getattr(self, "_value")
@@ -317,5 +306,5 @@ class IIIFMetadataField:
     def load_from_dict(cls, a_subfield):
         pass
 
-    field = property(get_field, set_field, del_field)
+    label = property(get_label, set_label, del_label)
     value = property(get_value, set_value, del_value)
