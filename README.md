@@ -115,6 +115,10 @@ new_object.change_description("A totally new description that is way better than
 
 ```
 
+## Contract for metadata labels
+
+See [this wiki page](https://github.com/uchicago-library/marc2iiif/wiki/allow-metadata-field-names) for information about metadata field names to use when editing the metadata block.
+
 ## Additional Inforamtion
 
 - [IIIF Presentation](http://iiif.io/api/presentation/2.1/)
