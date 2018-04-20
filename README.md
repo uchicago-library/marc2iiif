@@ -119,6 +119,8 @@ new_object.change_description("A totally new description that is way better than
 
 See [this wiki page](https://github.com/uchicago-library/marc2iiif/wiki/allow-metadata-field-names) for information about metadata field names to use when editing the metadata block.
 
+And, check out [this wiki page](https://github.com/uchicago-library/marc2iiif/wiki/contract-example-for-dictionary-to-load-marc-records-into-IIIFDataExtractionFromMarc) for how to structure the dictionary passed to IIIFDataEXtractionFromMarc.from_dict() method.
+
 ## Additional Inforamtion
 
 - [IIIF Presentation](http://iiif.io/api/presentation/2.1/)
