@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 import json
 from os.path import abspath, dirname, normpath, join, exists
 from os import _exit, getcwd, scandir, mkdir, sep
-from marc2iiif import MarcFilesFromDisk, IIIFDataExtractionFromMarc
+from marc2iiif import IIIFDataExtractionFromMarc
 from re import compile as re_compile
 from sys import stdout
 

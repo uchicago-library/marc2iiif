@@ -54,11 +54,46 @@ class IIIFDataExtractionFromMarc:
             if hasattr(self.metadata, "fields"):
                 return self.metadata.fields
 
+    def add_metadata(self, a_dict):
+        if isinstance(a_dict, dict):
+            if not a_dict.get("field_name") or not a_dict.get("field_value"):
+                raise ValueError("the input must have field_name and field_value defined")
+            else:
+               new = IIIFMetadataField(a_dict.get("field_name"), a_dict.get("field_value")) 
+               self.metadata.add_field(new)
+        else:
+            raise TypeError("must be a dict")
+
+    def change_title(self, value):
+        self.metadata.label = value
+
+    def change_description(self, value):
+        self.metadata.description = value
+
+    def remove_metadata(self, a_dict):
+        print("hi")
+        if isinstance(a_dict, dict):
+            field_name = list(a_dict.keys())[0]
+            field_value = a_dict.get(list(a_dict.keys())[0])
+            print(self.metadata._find_field(field_name, field_value))
+
+    def _search_for_metadata_field(self, name, query_term):
+        return self.metadata._find_field(name, query_term)
+
+    def modify_metadata(self, field_to_change, new_value):
+        if isinstance(field_to_change, dict) and isinstance(new_value, str):
+            result = self._search_for_metadata_field(list(field_to_change.keys())[0],
+                                                     field_to_change.get(list(field_to_change.keys())[0]))
+            if result and len(result) == 1:
+                self.metadata._replace_field_value(result[0], new_value)
+        else:
+            raise TypeError("first param is not a dict or second param is not a string")
+
+
     @classmethod
     def from_dict(cls, dictified_marc_record):
         if not isinstance(dictified_marc_record, dict):
             raise ValueError("can only instantiate class from a dict")
-
         new_metadata = IIIFMetadataBoxFromMarc.from_dict(dictified_marc_record)
         return cls(new_metadata)
 
@@ -83,7 +118,6 @@ class IIIFMetadataBoxFromMarc:
     __name__ = "IIIFMetadataBoxFromMarc"
 
     def __init__(self, label, description, identifier, fields):
-        print(identifier)
         self.label = label
         self.description = description
         self.identifier = identifier
@@ -147,6 +181,15 @@ class IIIFMetadataBoxFromMarc:
                 self.fields = [a_field]
         else:
             raise ValueError("fields can only contain IIIFMetadataFields")
+
+    def _find_field(self, field_name, field_value):
+        for n in self._fields:
+            if n.label == field_name and n.value == field_value:
+                return [n]
+        return []
+
+    def _replace_field_value(self, field_to_mod, new_value):
+        self._fields[self._fields.index(field_to_mod)].value = new_value
 
     def get_fields(self):
         output = []

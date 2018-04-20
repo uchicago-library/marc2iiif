@@ -101,7 +101,7 @@ If you want to edit a particular metadata field or remove a particular metadata 
 
 ```python
 
->>> new_object.modify_metadata({"Added Entry - Personal Name": "Doe, Jane"}, {"Franklin, Diana"})
+>>> new_object.modify_metadata({"Added Entry - Personal Name": "Doe, Jane"}, "Franklin, Diana")
 >>> new_object.remove_metadata({"Added Entry - Personal Name": "Doe, Jane"})
 
 ```
