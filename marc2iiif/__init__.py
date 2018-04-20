@@ -10,57 +10,6 @@ from .utils import combine_subfields_into_one_value, default_identifier_extracti
 
 # TODO write abstract file reader class and inherit MarcFilesFromDisk from that
 
-class MarcFilesFromDisk:
-    """a class to be used for reading MARC records from disk
-    """
-    __name__ = "MarcFilesFromDisk"
-
-    def __init__(self, file_path):
-        """instantiates an instance of MarcFilesFromDisk
-
-        :param str file_path: an absolute file path accessible on the machine running the program
-
-        :rtype :instance:`MarcFilesFromdisk`
-        """
-        # check if the path is a directory in which case there are likely to be more than 
-        # one more records to evaluate
-        if isdir(file_path):
-            self.records = self._build_generator_of_files(file_path, search_for_marc_file)
-        # check of the path is a file in which case there is only one marc record in this batch
-        elif isfile(file_path):
-            self.records = self._build_generator_of_files(file_path, match_single_file)
-        else:
-            msg = "{} is neither a directory nor a regular file on this disk!".format(file_path)
-            raise ValueError(msg)
-
-    def __iter__(self):
-        """a method to iterate through the records in the instance
-
-        :rtype lis
-        """
-        return self.records
-
-    def _build_generator_of_files(self, a_path, callback=None):
-        """a private method to build a generator out of the files in the inputted file_path
-
-        It will return a generator of MARC records as dictionaries that look like
-        {"fields":}
-        :param str a_path: a particular path on-disk
-        :param str callback: a function to use for checking if the path is a file and
-        satisfies the requirement
-        """
-        if isfile(a_path):
-            path = dirname(a_path)
-        else:
-            path = a_path
-        for n_item in scandir(path):
-            if n_item.is_dir():
-                yield from self._build_generator_of_files(n_item.path, callback=callback)
-            elif n_item.is_file() and callback(n_item.path, pot_match=a_path):
-                reader = MARCReader(open(n_item.path, 'rb'))
-                for record in reader:
-                    yield record.as_dict()
-
 class IIIFDataExtractionFromMarc:
     """a class to be used for extracting IIIF relevant data from a MARC record 
     """
@@ -87,6 +36,23 @@ class IIIFDataExtractionFromMarc:
         out["description"] = self.metadata.description
         out["label"] = self.metadata.label
         return out
+
+    def show_title(self):
+        if getattr(self, 'metadata', None):
+            if hasattr(self.metadata, "_label"):
+                return self.metadata.label
+        return None
+
+    def show_description(self):
+        if getattr(self, 'metadata', None):
+            if hasattr(self.metadata, "_label"):
+                return self.metadata.description
+        return None
+
+    def show_metadata(self):
+        if getattr(self, 'metadata', None):
+            if hasattr(self.metadata, "fields"):
+                return self.metadata.fields
 
     @classmethod
     def from_dict(cls, dictified_marc_record):
@@ -117,6 +83,7 @@ class IIIFMetadataBoxFromMarc:
     __name__ = "IIIFMetadataBoxFromMarc"
 
     def __init__(self, label, description, identifier, fields):
+        print(identifier)
         self.label = label
         self.description = description
         self.identifier = identifier
@@ -144,37 +111,33 @@ class IIIFMetadataBoxFromMarc:
         identifier = ""
         label = ""
         description = ""
-        for thing in [x for x in a_dict.get("fields")]:
-            keys = [key for key in thing.keys() if not key.startswith('00')]
-            description_lookups = [thing.get(x).get("subfields") for x in keys if x in DESCRIPTION_LOOKUPS]
-            title_ops = [thing.get(x).get("subfields") for x in keys if x in TITLE_LOOKUPS]
-            m = [(LABEL_LOOKUP.get(x), thing.get(x).get("subfields")) for x in keys if x in LABEL_LOOKUP.keys()]
-            if title_ops:
-                label = (title_ops[0][0]).get("a")
-                if label.endswith(":") or label.endswith("/") or label.endswith(" ") or label.endswith("=") or label.endswith("."):
-                    label = label[:-1]
-                    label[:-1]
-                    label.strip()
-                else:
-                    label = "An untitled Cultural Heritage Object"
-            if description_lookups:
-                description = combine_subfields_into_one_value(description_lookups[0])
-            else:
-                description = "This Cultural Heritage Object does not have a description"
-            if m:
-                field_name = m[0][0]
-                subfield_list = m[0][1]
-                field_value = combine_subfields_into_one_value(subfield_list)
-                field = IIIFMetadataField(field_name, field_value)
-                fields.append(field)
-                if field_name == 'Electronic Location and Access':
-                    pot_identifier = default_identifier_extraction(field_value)
-                    if pot_identifier[0]:
-                        identifier = pot_identifier[1]
-                else:
-                    identifier = ""
-
-        return cls(label, description, identifier, fields)
+        fields = a_dict.get("fields")
+        match_titles = [list(set(x.keys()) & set(TITLE_LOOKUPS))[0] 
+            for x in fields if list(set(x.keys() & set(TITLE_LOOKUPS)))]
+        match_descriptions = [list(set(x.keys()) & set(DESCRIPTION_LOOKUPS))[0] 
+            for x in fields  if list(set(x.keys() & set(DESCRIPTION_LOOKUPS)))]
+        match_mdata_fields = [list(set(x.keys()) & set(LABEL_LOOKUP.keys()))[0]
+            for x in fields if list(set(x.keys()) & set(LABEL_LOOKUP.keys()))]
+        label = "An untitled Cultural Heritage Object"
+        description = "This Cultural Heritage Object does not have a description"
+        metadata = []
+        for key in match_titles + match_descriptions + match_mdata_fields:
+            if key in TITLE_LOOKUPS:
+                subfields = [x.get(key).get("subfields") for x in fields if x.get(key)][0]
+                label = [x for x in subfields if 'a' in x.keys()][0].get("a")
+            elif key in DESCRIPTION_LOOKUPS:
+                description = [combine_subfields_into_one_value(x.get(key).get("subfields")) for x in fields if x.get(key)][0]
+            elif key in LABEL_LOOKUP.keys():
+                metadata.append(
+                    IIIFMetadataField(LABEL_LOOKUP.get(key),
+                    [combine_subfields_into_one_value(x.get(key).get("subfields"))
+                        for x in fields if x.get(key)][0])
+                )
+        if metadata:
+            pot_id = [x.value for x in metadata if x.label == 'Electronic Location and Access']
+            if pot_id:
+                identifier = pot_id[0]
+        return cls(label, description, identifier, metadata)
 
     def add_field(self, a_field):
         if isinstance(a_field, IIIFMetadataField):
@@ -189,7 +152,7 @@ class IIIFMetadataBoxFromMarc:
         output = []
         if hasattr(self, "_fields"):
             for n_field in getattr(self, "_fields"):
-                output.append({"field": n_field.label, "label": n_field.value})
+                output.append({"label": n_field.label, "value": n_field.value})
         return output
 
     def set_fields(self, value):
