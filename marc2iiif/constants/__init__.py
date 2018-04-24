@@ -1,3 +1,5 @@
+"""the constants used in looking up fields for marc field extraction to proper IIIF fields
+"""
 
 DESCRIPTION_LOOKUPS = [
     "300",
