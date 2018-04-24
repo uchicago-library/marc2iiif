@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/uchicago-library/marc2iiif.svg?branch=master)](https://travis-ci.org/uchicago-library/marc2iiif) [![Coverage Status](https://coveralls.io/repos/github/uchicago-library/marc2iiif/badge.svg?branch=master)](https://coveralls.io/github/uchicago-library/marc2iiif?branch=master) [![Documentation Status](https://readthedocs.org/projects/marc2iiif/badge/?version=latest)](http://marc2iiif.readthedocs.io/en/latest/?badge=latest)
+[![Build Status](https://travis-ci.org/uchicago-library/marc2iiif.svg?branch=master)](https://travis-ci.org/uchicago-library/marc2iiif) [![Coverage Status](https://coveralls.io/repos/github/uchicago-library/marc2iiif/badge.svg?branch=master)](https://coveralls.io/github/uchicago-library/marc2iiif?branch=master) [![Documentation Status](https://readthedocs.org/projects/new-marc2iiif/badge/?version=latest)](http://marc2iiif.readthedocs.io/en/latest/?badge=latest)
 
 # marc2iiif
 
