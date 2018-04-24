@@ -307,6 +307,10 @@ class IIIFMetadataBoxFromMarc:
     def _replace_field_value(self, field_to_mod, new_value):
         self._fields[self._fields.index(field_to_mod)].value = new_value
 
+    def _remove_metadata_field(self, field_to_delete):
+        position = self._fields.index(field_to_delete) 
+        del self._fields[position]
+
     def get_fields(self):
         output = []
         if hasattr(self, "_fields"):
