@@ -2,7 +2,7 @@
 from io import BytesIO
 import unittest
 
-from marc2iiif import IIIFDataExtractionFromMarc, IIIFMetadataBoxFromMarc, IIIFMetadataField
+from marc2iiif.classes import IIIFDataExtractionFromMarc, IIIFMetadataBoxFromMarc, IIIFMetadataField
 
 
 class Tests(unittest.TestCase):
