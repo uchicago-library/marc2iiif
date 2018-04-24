@@ -11,6 +11,7 @@ Welcome to Marc2IIIF's documentation!
    :caption: Contents:
 
    intro
+   autodoc
 
 Indices and tables
 ==================
