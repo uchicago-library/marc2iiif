@@ -38,10 +38,16 @@ class IIIFDataExtractionFromMarc:
         return out
 
     def show_title(self):
+        """a method to show the title of the IIIF record
+
+        It retrieves the label from the metadata information that the instance delegates metadata collection to
+
+        :rtype str
+        """
         if getattr(self, 'metadata', None):
             if hasattr(self.metadata, "_label"):
                 return self.metadata.label
-        return None
+        return 'None'
 
     def show_description(self):
         if getattr(self, 'metadata', None):

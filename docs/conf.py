@@ -26,7 +26,7 @@ author = 'Tyler Danstrom'
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = 'Pre-Alpha'
+release = 'Beta'
 
 
 # -- General configuration ---------------------------------------------------
@@ -151,7 +151,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'Marc2IIIF', 'Marc2IIIF Documentation',
-     author, 'Marc2IIIF', 'One line description of project.',
+     author, 'Tyler Danstrom', 'An application that will take 1 or more Marc records(in either binary or MARCXML) and convert them into IIIF manifests',
      'Miscellaneous'),
 ]
 
