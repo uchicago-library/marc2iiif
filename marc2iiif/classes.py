@@ -135,7 +135,7 @@ class IIIFDataExtractionFromMarc:
         if isinstance(a_dict, dict):
             field_name = list(a_dict.keys())[0]
             field_value = a_dict.get(list(a_dict.keys())[0])
-            result = self.metadata._findfield(field_name, field_value)
+            result = self.metadata._find_field(field_name, field_value)
             if result and len(result) == 1:
                 self.metadata._remove_metadata_field(result[0])
             else:
