@@ -1,5 +1,3 @@
-Introduction
-============
 
 This is an application that will allow the user to do the following
 
@@ -11,7 +9,6 @@ This will require the following tool (which is out of scope of this product)
 
 1. an application that will take the generated IIIF manifests and a location of digital files and add the matching files to each IIIF manifest thereby build the sequences for each manifest.
 
-Author
-------
+Created by:
 
 - verbalhanglider (tdanstrom@uchicago.edu)
