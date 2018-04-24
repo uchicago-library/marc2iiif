@@ -10,6 +10,8 @@ Welcome to Marc2IIIF's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+    intro
+    autodoc
 
 
 Indices and tables
