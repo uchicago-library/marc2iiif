@@ -1,8 +1,11 @@
 Auto Docs
 =========
 
-.. autotomodule:: marc2iiif.__init__
+.. autotomodule:: marc2iiif
+    :members:
 
-.. automodule:: marc2iiif.constants.__init__
+.. automodule:: marc2iiif.constants
+    :members:
 
-.. automodule:: marc2iiif.utils.__init__
+.. automodule:: marc2iiif.utils
+    :members:
