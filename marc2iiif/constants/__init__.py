@@ -1,4 +1,12 @@
-"""the constants used in looking up fields for marc field extraction to proper IIIF fields
+"""
+the constants used in looking up fields for marc field extraction to proper IIIF fields
+
+DESCRIPTION_LOOKUPS is a list MARC fields that could be classified as description fields
+
+TITLE_LOOKUPS is a list of MARC fields that could be classified as giving title information
+
+LABEL_LOOKUPS is a a dictionary where the key is the MARC field and the value is the human 
+interpretable string explaining what that field is
 """
 
 DESCRIPTION_LOOKUPS = [
@@ -171,4 +179,3 @@ LABEL_LOOKUP = {
 TITLE_LOOKUPS = [
     "245"
 ]
-

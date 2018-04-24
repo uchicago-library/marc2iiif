@@ -1,20 +1,29 @@
-"""utility functions for marc2iiif library
+"""
+utility functions for marc2iiif library
 """
 
 from sys import stderr
 
 def match_single_file(src, pot_match=None):
+    """
+    a function to determine if a file matches with another file
+
+    :rtype Boolean
+    :returns whether the file is a match or not
+    """
     if pot_match:
         if src == pot_match:
             return True
     return False
 
 def search_for_marc_file(src, pot_match=None):
-    """a function to determine if a file in a directory tree is a MARC record
+    """
+    a function to determine if a file in a directory tree is a MARC record
 
     :param str src: an absolute filepath to a file that may be a MARC record
 
     :rtype Boolean
+    :returns whether or not the file is a MARC record
     """
     if src.endswith('mrc'):
         return True
@@ -23,7 +32,8 @@ def search_for_marc_file(src, pot_match=None):
 
 
 def default_identifier_extraction(value):
-    """a function to take a pi.lib URL and return the unique identifier 
+    """
+    a function to take a pi.lib URL and return the unique identifier 
     
     It splits the URL from the scheme and host name. WARNING: assumes that the scheme is
     https which is hard-coded into the string
@@ -31,6 +41,7 @@ def default_identifier_extraction(value):
     :param str value: a pi.lib.uchicago.edu URL string
 
     :rtype str
+    :returns the actual url without domain implementation details
     """
     if 'http' in value:
         items = value.split("http://pi.lib.uchicago.edu/1001/")
@@ -46,6 +57,12 @@ def default_identifier_extraction(value):
     return out
 
 def combine_subfields_into_one_value(list_of_dicts):
+    """
+    a function to merge a list of dicts into a single string
+
+    :rtype str
+    :returns the complete value to be printed in the metadata field
+    """
     single_string = ""
     for a_dict in list_of_dicts:
         single_string += " " + a_dict.get(list(a_dict.keys())[0])
