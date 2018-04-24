@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+
+import os
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+
 #
 # Configuration file for the Sphinx documentation builder.
 #

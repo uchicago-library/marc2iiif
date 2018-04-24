@@ -10,12 +10,7 @@ Welcome to Marc2IIIF's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-.. autosummary:: 
-    :toctree _autosummary
-    marc2iiif
-    marc2iiif.constants
-    marc2iiif.utils
-
+   intro
 
 Indices and tables
 ==================
