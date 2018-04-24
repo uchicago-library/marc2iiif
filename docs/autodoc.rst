@@ -5,12 +5,12 @@ Auto Docs
    :inherited-members:
    :special-members: __init__
 
-.. automodule:: pyiiif.utils
+.. automodule:: marc2iiif.utils
    :members:
    :inherited-members:
    :special-members: __init__
 
-.. automodule:: pyiiif.constants
+.. automodule:: marc2iiif.constants
    :members:
    :inherited-members:
    :special-members: __init__
