@@ -1,7 +1,7 @@
 Auto Docs
 =========
-.. automodule:: marc2iiif
+.. autoclass:: IIIFMetadataExtractionFromMarc
 
-.. automodule:: marc2iiif.utils
+.. autoclass:: IIIFMetadataExtractionFromMarc
 
-.. automodule:: marc2iiif.constants
+.. autoclass:: IIIFMetadataField
