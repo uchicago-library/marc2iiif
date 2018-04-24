@@ -14,3 +14,4 @@ Auto Docs
    :members:
 
 .. autoclass:: marc2iiif.classes.IIIFMetadataField
+   :members:
