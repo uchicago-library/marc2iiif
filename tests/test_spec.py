@@ -54,7 +54,7 @@ class Tests(unittest.TestCase):
             if n.get('value') == 'A new subject':
                 check = True
                 break
-        self.assertEqual(check, False)
+        self.assertEqual(check, True)
 
     def testRemoveMetadata(self):
         test_object = IIIFDataExtractionFromMarc.from_dict(self.data)

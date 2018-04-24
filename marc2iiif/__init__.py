@@ -71,11 +71,9 @@ class IIIFDataExtractionFromMarc:
         self.metadata.description = value
 
     def remove_metadata(self, a_dict):
-        print("hi")
         if isinstance(a_dict, dict):
             field_name = list(a_dict.keys())[0]
             field_value = a_dict.get(list(a_dict.keys())[0])
-            print(self.metadata._find_field(field_name, field_value))
 
     def _search_for_metadata_field(self, name, query_term):
         return self.metadata._find_field(name, query_term)
