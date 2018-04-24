@@ -7,5 +7,5 @@ Auto Docs
 .. automodule:: marc2iiif.utils
     :members:
 
-.. automodule:: marc2iiif.classes
+.. autoclass:: marc2iiif.classes.IIIFDataExtractionFromMarc
    :members:
