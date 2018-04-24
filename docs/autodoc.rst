@@ -1,16 +1,13 @@
 Auto Docs
 =========
-.. automodule:: marc2iiif
+.. automodule:: marc2iiif.__init__
    :members:
    :inherited-members:
-   :special-members: __init__
 
-.. automodule:: pyiiif.utils
+.. automodule:: pyiiif.utils.__init__
    :members:
    :inherited-members:
-   :special-members: __init__
 
-.. automodule:: pyiiif.constants
+.. automodule:: pyiiif.constants.__init__
    :members:
    :inherited-members:
-   :special-members: __init__
