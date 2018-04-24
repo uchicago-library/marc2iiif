@@ -1,3 +1,7 @@
+"""
+the main classes for interacting with the marc2iiif library code
+"""
+
 from itertools import chain
 from os import scandir
 from os.path import dirname, isdir, isfile
@@ -11,7 +15,7 @@ from .utils import combine_subfields_into_one_value, default_identifier_extracti
 
 class IIIFDataExtractionFromMarc:
     """
-    a class to be used for extracting IIIF relevant data from a MARC record 
+    a class to be used for retrieving and packaging metadata from MARC records for conversion to IIIF
     """
     __name__ = "IIIFDataExtractionFromMarc"
 
@@ -27,12 +31,24 @@ class IIIFDataExtractionFromMarc:
         self.metadata = metadata
             
     def __repr__(self):
+        """
+        determines how to display the instance in debugging statements
+        """
         return self.__name__
 
     def __str__(self):
-        return self.__name__
+        """
+        determines how to display the instance as a plain string
+        """
+        return self.metadata.label
 
     def to_dict(self):
+        """
+        a method to output the contents of the instance as a IIIF valid dictionary
+
+        :rtype dict
+        :returns the data in the instance as a IIIF valid dict that can be exported to json
+        """
         out = {}
         out["@context"] = "https://iiif.io/api/presentations/2/context.json"
         out["@id"] = "https://iiif-manifest.lib.uchicago.edu/" + self.metadata.identifier
@@ -48,6 +64,7 @@ class IIIFDataExtractionFromMarc:
         It retrieves the label from the metadata information that the instance delegates metadata collection to
 
         :rtype str
+        :returns the IIIF label for the instance's Cultural Heritage Object
         """
         if getattr(self, 'metadata', None):
             if hasattr(self.metadata, "_label"):
@@ -55,17 +72,35 @@ class IIIFDataExtractionFromMarc:
         return 'None'
 
     def show_description(self):
+        """
+        a method to show the description of the IIIF record
+
+        :rtype str
+        :returns the IIIF description for the instance's Cultural Heritage Object
+        """
         if getattr(self, 'metadata', None):
             if hasattr(self.metadata, "_label"):
                 return self.metadata.description
         return None
 
     def show_metadata(self):
+        """
+        a method to show the metadata fields available for the particular instance
+
+        :rtype list
+        :returns a list of strings with field name and field value in each string separated with a ':' such that a single field looks like "field:value"
+        """
         if getattr(self, 'metadata', None):
             if hasattr(self.metadata, "fields"):
                 return self.metadata.fields
 
     def add_metadata(self, a_dict):
+        """
+        a method to add a new metadata field to a particular instance
+
+        :param dict a_dict: a dictionary with the key as the field value found in constants.LABEL_LOOOKUPS
+         and value as the particular value that needs to be added
+        """
         if isinstance(a_dict, dict):
             if not a_dict.get("field_name") or not a_dict.get("field_value"):
                 raise ValueError("the input must have field_name and field_value defined")
@@ -76,20 +111,47 @@ class IIIFDataExtractionFromMarc:
             raise TypeError("must be a dict")
 
     def change_title(self, value):
+        """
+        a method to modify the label of the particular IIIF record instance
+
+        :param str value: the new title to add to the IIIF record
+        """
         self.metadata.label = value
 
     def change_description(self, value):
+        """
+        a method to modify the description of the particular IIIF record instance
+
+        :param str value: the new description to add to the IIIF record
+        """
         self.metadata.description = value
 
     def remove_metadata(self, a_dict):
+        """
+        a method to remove a particular metadata field from the fields
+
+        :param dict a_dict: a key:value pair where key=field name to delete, and value=the value of the named field to remove
+        """
         if isinstance(a_dict, dict):
             field_name = list(a_dict.keys())[0]
             field_value = a_dict.get(list(a_dict.keys())[0])
+            result = self.metadata._findfield(field_name, field_value)
+            if result and len(result) == 1:
+                self.metadata._remove_metadata_field(result[0])
+            else:
+                raise ValueError("there must be 1 and only 1 metadata field matching the query")
 
     def _search_for_metadata_field(self, name, query_term):
         return self.metadata._find_field(name, query_term)
 
     def modify_metadata(self, field_to_change, new_value):
+        """
+        a method to change a particular metadata field
+
+        :param str field_to_change: the name of the field to change
+        :param str new_value: the value to replace the current value of named field with
+
+        """
         if isinstance(field_to_change, dict) and isinstance(new_value, str):
             result = self._search_for_metadata_field(list(field_to_change.keys())[0],
                                                      field_to_change.get(list(field_to_change.keys())[0]))
@@ -101,32 +163,63 @@ class IIIFDataExtractionFromMarc:
 
     @classmethod
     def from_dict(cls, dictified_marc_record):
+        """
+        a method to create an instance of IIIFDataExtractionFromMarc from a dictionary of a MARC record
+
+        :param dict dictified_marc_record: a dictionary containing a complete MARC record
+
+        :rtype :instance:`IIIFDataExtractionFromMarc`
+        """
         if not isinstance(dictified_marc_record, dict):
             raise ValueError("can only instantiate class from a dict")
         new_metadata = IIIFMetadataBoxFromMarc.from_dict(dictified_marc_record)
         return cls(new_metadata)
 
     def set_metadata(self, value):
+        """
+        sets the metadata property
+
+        :param :instance:`IIIFMetadataBoxFromMarc`: an instance of IIIFMetadataBoxMarc
+        """
         if isinstance(value, IIIFMetadataBoxFromMarc):
             setattr(self, "_metadata", value)
         else:
             raise ValueError("must place an instance of IIIFMetadataBoxFromMarc into this field")
 
     def get_metadata(self):
+        """
+        gets the value of the metadata property
+        """
         if hasattr(self, '_metadata'):
             return getattr(self, '_metadata')
    
     def del_metadata(self):
+        """
+        deletes the metadata property from the instance
+        """
         if hasattr(self, '_metadata'):
             delattr(self, "_metadata")
 
     metadata = property(get_metadata, set_metadata, del_metadata)
 
 class IIIFMetadataBoxFromMarc:
-
+    """
+    a class to be used for extracting IIIF metadata from a Marc record
+    """
+ 
     __name__ = "IIIFMetadataBoxFromMarc"
 
     def __init__(self, label, description, identifier, fields):
+        """
+        initializes an instance of the class
+
+        :param str label: a string that can be used as the title for the CHO
+        :param str description: a string of 1-4 sentences describing the CHO that this instance defines
+        :param str identifier: a string representing a unique identification for a IIIF CHO
+        :param list fields: a list of instances of :instance:`IIIFMEtadataField`
+    
+        :rtype :instance:`IIIFMetadataBoxMarc`
+        """
         self.label = label
         self.description = description
         self.identifier = identifier
@@ -150,6 +243,15 @@ class IIIFMetadataBoxFromMarc:
 
     @classmethod
     def from_dict(cls, a_dict):
+        """
+        a classmethod to create an instance of the class from a dictionary
+
+        Parameter must have a key 'fields' that has a value that is a list of dictionaries.
+        Each of those dictionaries must have a key found in any of the LOOKUP lists and a value that
+        is a list of dictionaries that contain a subfield key and a str value.
+
+        :param dict a_dict: a dictionary containing a MARC record
+        """
         fields = []
         identifier = ""
         label = ""
@@ -183,6 +285,11 @@ class IIIFMetadataBoxFromMarc:
         return cls(label, description, identifier, metadata)
 
     def add_field(self, a_field):
+        """
+        a method to add a new field instance to the fields list
+
+        :param :instance:`IIIFMetadataField`: a field to add to the list of fields
+        """
         if isinstance(a_field, IIIFMetadataField):
             if hasattr(self, '_fields'):
                 self._fields.append(a_field)
@@ -275,10 +382,21 @@ class IIIFMetadataBoxFromMarc:
     total = property(get_total, set_total, del_total)
 
 class IIIFMetadataField:
-
+    """
+    a class to be used for extracting IIIF metadata from a Marc record
+    """
+ 
     __name__ = "IIIFMetadataField"
 
     def __init__(self, name, value):
+        """
+        initializes an instance of the class
+
+        :param str name: a label for the field
+        :param str value: a value for the field being created
+    
+        :rtype :instance:`IIIFMetadataField`
+        """
         self.label = name
         self.value = value
 
@@ -292,34 +410,52 @@ class IIIFMetadataField:
         return {"label": self.label, "value": self.value}
 
     def get_label(self):
+        """
+        gets the value of the label property
+        """
         return getattr(self, "_label")
 
     def set_label(self, value):
+        """
+        sets the value of the label property
+
+        :param str value: the value to set on the property
+        """
         if isinstance(value, str):
             setattr(self, "_label", value)
         else:
             raise ValueError("field must be a string")
 
     def del_label(self):
+        """
+        deletes the label property
+        """
         if hasattr(self, "_label"):
             delattr(self, "_label")
 
     def get_value(self):
+        """
+        gets teh value of the value property
+        """
         return getattr(self, "_value")
 
     def set_value(self, value):
+        """
+        sets the value of the value property
+
+        :param str value: the value of the value to set
+        """
         if isinstance(value, str):
             setattr(self, "_value", value)
         else:
             raise ValueError("value must be a string")
 
     def del_value(self):
+        """
+        delete the value property
+        """
         if hasattr(self, "_value"):
             delattr(self, "_value")
-
-    @classmethod
-    def load_from_dict(cls, a_subfield):
-        pass
 
     label = property(get_label, set_label, del_label)
     value = property(get_value, set_value, del_value)

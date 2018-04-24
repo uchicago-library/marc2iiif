@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 import json
 from os.path import abspath, dirname, normpath, join, exists
 from os import _exit, getcwd, scandir, mkdir, sep
-from marc2iiif import IIIFDataExtractionFromMarc
+from marc2iiif.classes import IIIFDataExtractionFromMarc
 from re import compile as re_compile
 from sys import stdout
 
@@ -19,7 +19,7 @@ def main():
     parsed_args = arguments.parse_args()
     try:
         location = parsed_args.location_of_files
-        marc_readers = MarcFilesFromDisk(location)
+        marc_readers = []
         for n in marc_readers:
             p = IIIFDataExtractionFromMarc.from_dict(n)
             data = p.to_dict()

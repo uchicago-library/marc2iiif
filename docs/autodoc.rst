@@ -9,3 +9,8 @@ Auto Docs
 
 .. autoclass:: marc2iiif.classes.IIIFDataExtractionFromMarc
    :members:
+
+.. autoclass:: marc2iiif.classes.IIIFMetadataBoxFromMarc
+   :members:
+
+.. autoclass:: marc2iiif.classes.IIIFMetadataField

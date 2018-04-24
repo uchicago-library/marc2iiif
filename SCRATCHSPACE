@@ -1,0 +1,51 @@
+class MarcFilesFromDisk:
+    """a class to be used for reading MARC records from disk
+    """
+    __name__ = "MarcFilesFromDisk"
+
+    def __init__(self, file_path):
+        """instantiates an instance of MarcFilesFromDisk
+
+        :param str file_path: an absolute file path accessible on the machine running the program
+
+        :rtype :instance:`MarcFilesFromdisk`
+        """
+        # check if the path is a directory in which case there are likely to be more than 
+        # one more records to evaluate
+        if isdir(file_path):
+            self.records = self._build_generator_of_files(file_path, search_for_marc_file)
+        # check of the path is a file in which case there is only one marc record in this batch
+        elif isfile(file_path):
+            self.records = self._build_generator_of_files(file_path, match_single_file)
+        else:
+            msg = "{} is neither a directory nor a regular file on this disk!".format(file_path)
+            raise ValueError(msg)
+
+    def __iter__(self):
+        """a method to iterate through the records in the instance
+
+        :rtype lis
+        """
+        return self.records
+
+    def _build_generator_of_files(self, a_path, callback=None):
+        """a private method to build a generator out of the files in the inputted file_path
+
+        It will return a generator of MARC records as dictionaries that look like
+        {"fields":}
+        :param str a_path: a particular path on-disk
+        :param str callback: a function to use for checking if the path is a file and
+        satisfies the requirement
+        """
+        if isfile(a_path):
+            path = dirname(a_path)
+        else:
+            path = a_path
+        for n_item in scandir(path):
+            if n_item.is_dir():
+                yield from self._build_generator_of_files(n_item.path, callback=callback)
+            elif n_item.is_file() and callback(n_item.path, pot_match=a_path):
+                reader = MARCReader(open(n_item.path, 'rb'))
+                for record in reader:
+                    yield record.as_dict()
+
