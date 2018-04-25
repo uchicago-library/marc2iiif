@@ -33,29 +33,25 @@ PROTIP: if you are planning to add code to the library and want to be able to ru
 
 ```python
 
->>> from marc2iiif import MarcFilesFromDisk
->>> location = "/path/on/disk/to/a/directory/full/of/marc/records"
->>> marc_records = MarcFilesFromDisk(location)
->>> for record in marc_records:
->>>      print(record)
-
-```
-
-This will print out dictionaries for each marc record that was found in the path "/path/on/disk/to/a/directory/full/of/marc/records".
-
-```python
-
 >>> from marc2iiif import IIIFDataExtractionFromMarc
->>> from pymarc import MARCReader
->>> reader = MARCReader(open(marc_file_path), 'rb')
->>> record = None
->>> for rec in reader:
->>>     record = rec.as_dict()
+>>> record = {"leaders": "088325aabb 83dfasd0adf00",
+              "fields": [{"245": {"subfields": [{"a": "A title"}, {"c": "statement of responsbility"}]}},
+                         {"300": {"subfields": [{"a": "A subject"}]}},
+                         {"100": {"subfields": [{"a": "a title"}]}}]}
 >>> new_object = IIIFDataExtractionFromMarc.from_dict(record)
 
 ```
 
 You now have a very a defined instance of a IIIFDataExtractionFromMarc object. You can get the name of the CHO that this record describes by entering
+
+```python
+
+>>> from marc2iiif import IIIFMetadataField, IIIFMetadataBoxFromMarc
+>>> a_field = IIIFMetadataField("Local Subject", "foo bar")
+>>> a_box = IIIFMetadataBoxFromMarc("a label", "this describes a CHO and why it is important", "/foo/bar", [a_field])
+
+
+```
 
 ```python
 
