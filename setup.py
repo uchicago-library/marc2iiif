@@ -16,5 +16,12 @@ setup(
         "Intended Audience :: Education",
         "Operating System :: POSIX :: Linux",
         "Topic :: Text Processing :: Markup :: XML",
+    ],
+    dependency_links = [
+        'https://github.com/uchicago-library/pyiiif/tarball/master#egg=pyiiif'
+    ],
+    install_requires = [
+        'pymarc'
+
     ]
 )
