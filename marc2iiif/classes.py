@@ -51,7 +51,7 @@ class IIIFDataExtractionFromMarc:
         :returns the data in the instance as a IIIF valid dict that can be exported to json
         """
         out = OrderedDict()
-        out["@context"] = "https://iiif.io/api/presentations/2/context.json"
+        out["@context"] = "http://iiif.io/api/presentation/2/context.json"
         out["@id"] = "https://iiif-manifest.lib.uchicago.edu/" + self.metadata.identifier
         out["@type"] = "sc:Manifest"
         out["label"] = self.metadata.label
