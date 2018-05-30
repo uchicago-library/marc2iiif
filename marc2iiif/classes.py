@@ -2,6 +2,7 @@
 the main classes for interacting with the marc2iiif library code
 """
 
+from collections import OrderedDict
 from itertools import chain
 from os import scandir
 from os.path import dirname, isdir, isfile
@@ -49,7 +50,7 @@ class IIIFDataExtractionFromMarc:
         :rtype dict
         :returns the data in the instance as a IIIF valid dict that can be exported to json
         """
-        out = {}
+        out = OrderedDict()
         out["@context"] = "https://iiif.io/api/presentations/2/context.json"
         out["@id"] = "https://iiif-manifest.lib.uchicago.edu/" + self.metadata.identifier
         out["metadata"] = self.metadata.to_dict()
