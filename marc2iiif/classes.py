@@ -53,9 +53,22 @@ class IIIFDataExtractionFromMarc:
         out = OrderedDict()
         out["@context"] = "https://iiif.io/api/presentations/2/context.json"
         out["@id"] = "https://iiif-manifest.lib.uchicago.edu/" + self.metadata.identifier
-        out["metadata"] = self.metadata.to_dict()
-        out["description"] = self.metadata.description
+        out["@type"] = "sc:Manifest"
         out["label"] = self.metadata.label
+        out["description"] = self.metadata.description
+        out["metadata"] = self.metadata.to_dict()
+        out["sequences"] = [{"@id": "http://example.org/sequence",
+                            "@type": "sc:Sequence",
+                            "label": "First sequence",
+                            "canvases": [
+                                {"@id": "http://example.org/canvas",
+                                 "@type": "sc:Canvas",
+                                 "label": "First canvas",
+                                 "height": 1,
+                                 "width": 1
+                                }
+                            ]
+                          }]
         return out
 
     def show_title(self):
