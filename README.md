@@ -29,7 +29,7 @@ PROTIP: if you are planning to add code to the library and want to be able to ru
 
 ```python
 
->>> from marc2iiif import IIIFDataExtractionFromMarc
+>>> from marc2iiif.classes import IIIFDataExtractionFromMarc
 >>> record = {"leaders": "088325aabb 83dfasd0adf00",
               "fields": [{"245": {"subfields": [{"a": "A title"}, {"c": "statement of responsbility"}]}},
                          {"300": {"subfields": [{"a": "A subject"}]}},
