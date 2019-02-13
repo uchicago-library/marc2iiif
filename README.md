@@ -107,13 +107,20 @@ new_object.change_description("A totally new description that is way better than
 
 ```
 
+Output the object to JSON:
+
+```import json
+json.dumps(new_object.to_dict())
+
+```
+
 ## Contract for metadata labels
 
 See [this wiki page](https://github.com/uchicago-library/marc2iiif/wiki/allow-metadata-field-names) for information about metadata field names to use when editing the metadata block.
 
 And, check out [this wiki page](https://github.com/uchicago-library/marc2iiif/wiki/contract-example-for-dictionary-to-load-marc-records-into-IIIFDataExtractionFromMarc) for how to structure the dictionary passed to IIIFDataEXtractionFromMarc.from_dict() method.
 
-## Additional Inforamtion
+## Additional Information
 
 - [IIIF Presentation](http://iiif.io/api/presentation/2.1/)
 - [MARC21](https://www.loc.gov/marc/bibliographic/)
